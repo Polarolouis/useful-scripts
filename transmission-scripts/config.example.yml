@@ -1,0 +1,9 @@
+verbose: true
+transmission:
+  protocol: "https"
+  host: "transmission.example.fr"
+  port: 443
+  auth:
+    auth_enabled: true
+    username: "username"
+    password: "password"
