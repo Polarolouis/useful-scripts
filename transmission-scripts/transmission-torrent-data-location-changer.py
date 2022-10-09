@@ -55,6 +55,9 @@ else:
     transmissionClient = transmission_rpc.client.Client(
         protocol=transmissionPort, host=transmissionHost, port=transmissionPort)
 
+if verbose:
+    print(f"RPC Version: {transmissionClient.rpc_version}")
+
 incompleteTorrentsList = [
     torrent for torrent in transmissionClient.get_torrents() if torrent.available != 100.0]
 
@@ -69,10 +72,14 @@ newPath = input("Please enter the FULL PATH of the downloaded file: ")
 torrentId = transmissionClient.get_torrents()[1].id
 filename = os.path.basename(newPath)
 folderPath = pathlib.Path(os.path.dirname(newPath))
-print(f"After renaming, id: {torrentId} Torrent name: {filename}\nTorrent data location: {folderPath}")
+print(folderPath)
+print(
+    f"After renaming, id: {torrentId} Torrent name: {filename}\nTorrent data location: {folderPath}")
 if input("Validate? (y/N)").lower() == "y":
-    transmissionClient.rename_torrent_path(torrent_id=torrentId, location=folderPath, name=filename)
+    transmissionClient.move_torrent_data(ids=torrentId, location=folderPath)
+    #transmissionClient.rename_torrent_path(
+    #    torrent_id=torrentId, location=transmissionClient.get_torrents()[1].download_dir, name=filename)
     print(
-    f"Torrent name: {transmissionClient.get_torrents()[1].name}\nTorrent data location: {transmissionClient.get_torrents()[1].download_dir}")
+        f"Torrent name: {transmissionClient.get_torrents()[1].name}\nTorrent data location: {transmissionClient.get_torrents()[1].download_dir}")
 else:
     print("Skipping")
