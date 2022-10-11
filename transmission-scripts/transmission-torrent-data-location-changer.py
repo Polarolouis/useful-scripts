@@ -61,25 +61,50 @@ if verbose:
 incompleteTorrentsList = [
     torrent for torrent in transmissionClient.get_torrents() if torrent.available != 100.0]
 
-# for incompleteTorrent in incompleteTorrentsList:
-#     print("------")
-#     print(
-#         f"Torrent name: {incompleteTorrent.name}\nTorrent data location: {incompleteTorrent.download_dir}")
-print(
-    f"Torrent name: {transmissionClient.get_torrents()[1].name}\nTorrent data location: {transmissionClient.get_torrents()[1].download_dir}")
-newPath = input("Please enter the FULL PATH of the downloaded file: ")
+lenIncompleteList = len(incompleteTorrentsList)
 
-torrentId = transmissionClient.get_torrents()[1].id
-filename = os.path.basename(newPath)
-folderPath = pathlib.Path(os.path.dirname(newPath))
-print(folderPath)
-print(
-    f"After renaming, id: {torrentId} Torrent name: {filename}\nTorrent data location: {folderPath}")
-if input("Validate? (y/N)").lower() == "y":
-    transmissionClient.move_torrent_data(ids=torrentId, location=folderPath)
-    #transmissionClient.rename_torrent_path(
-    #    torrent_id=torrentId, location=transmissionClient.get_torrents()[1].download_dir, name=filename)
+for index, incompleteTorrent in enumerate(incompleteTorrentsList):
+    print(f"---{index:03d}/{lenIncompleteList} | {index/lenIncompleteList*100:.2f}%---")
+
+    # Extracting torrent ID, we'll use it because it doesn't change
+    torrentId = incompleteTorrent.id
+
     print(
-        f"Torrent name: {transmissionClient.get_torrents()[1].name}\nTorrent data location: {transmissionClient.get_torrents()[1].download_dir}")
-else:
-    print("Skipping")
+        f"Torrent name: {transmissionClient.get_torrent(torrentId).name}\nTorrent data location: {transmissionClient.get_torrent(torrentId).download_dir}")
+    newPath = input("Please enter the FULL PATH of the downloaded file: ")
+
+    filename = os.path.basename(newPath)
+    folderPath = pathlib.Path(os.path.dirname(newPath))
+    print(folderPath)
+    print(
+        f"After renaming, id: {torrentId} \nNew torrent name: {filename}\nNew torrent data location: {folderPath}")
+    if input("Validate? (y/N)").lower() == "y":
+
+        # Changing the directory containing the data
+        transmissionClient.move_torrent_data(
+            ids=torrentId, location=folderPath)
+
+        # Retrieving the torrent name to change it
+        fileToRename = transmissionClient.get_torrent(torrentId).name.strip()
+        # If we do not strip it won't work
+        # the problem seems to occur because of trailing whitespaces
+
+        if verbose:
+            print(fileToRename)
+            print(transmissionClient.get_torrent(torrentId))
+
+        # Renaming the torrent
+        transmissionClient.rename_torrent_path(
+            torrentId, fileToRename, filename)
+        print(
+            f"Torrent name: {transmissionClient.get_torrent(torrentId).name}\nTorrent data location: {transmissionClient.get_torrent(torrentId).download_dir}")
+        if verbose:
+            print(
+                f"Verifying {transmissionClient.get_torrent(torrentId).name} data on {transmissionClient.get_torrent(torrentId).download_dir}.")
+        try:
+            transmissionClient.verify_torrent(torrentId)
+        except Exception as e:
+            print(
+                f"An error occured while verifying the data on the provided download directory : {e}")
+    else:
+        print("Skipping")
